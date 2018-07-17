@@ -185,7 +185,7 @@ jobs:
 workflows:
   version: 2
   
-  nightly:
+  daily:
     triggers:
       - schedule:
           cron: "30 14 * * *"
