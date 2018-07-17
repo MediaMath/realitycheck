@@ -184,23 +184,25 @@ jobs:
 
 workflows:
   version: 2
-  resource_class_jobs:
+  
+  nightly:
+    triggers:
+      - schedule:
+          cron: "30 14 * * *"
+          filters:
+            branches:
+              only:
+                - master
     jobs:
       - small
       - medium
       - medium-plus
       - large
       - xlarge
-
-  vm_jobs:
-    jobs:
       - machine
       - remote_docker
       - docker_layer_caching
       - machine_dlc
-
-  feature_jobs:
-    jobs:
       - save_and_restore_cache
       - contexts:
           context: org-global
