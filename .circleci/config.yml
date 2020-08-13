@@ -198,23 +198,25 @@ jobs:
 
 workflows:
   version: 2
-  resource_class_jobs:
+  
+  daily:
+    triggers:
+      - schedule:
+          cron: "0 15 * * *"
+          filters:
+            branches:
+              only:
+                - master
     jobs:
       - small
       - medium
       - medium+
       - large
       - xlarge
-
-  vm_jobs:
-    jobs:
       - machine
       - remote_docker
       - docker_layer_caching
       - machine_dlc
-
-  feature_jobs:
-    jobs:
       - save_and_restore_cache
       - contexts:
           context: Mediamath
