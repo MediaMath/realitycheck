@@ -6,7 +6,7 @@ executors:
       resource_class_name:
         type: string
     docker:
-      - image: 'circleci/ruby:2.4.1'
+      - image: 'cimg/ruby:2.4-node'
     resource_class: << parameters.resource_class_name >>
 
   remote_docker_defaults:
