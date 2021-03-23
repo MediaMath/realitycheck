@@ -1,5 +1,7 @@
 version: 2.1
 
+
+
 executors:
   resource_job_executor:
     parameters:
@@ -19,11 +21,11 @@ executors:
     working_directory: /a/contexts/test
 
   workspaces_defaults:
-    docker: 
+    docker:
       - image: 'circleci/node:latest'
     working_directory: ~/foo/bar
 
-commands: 
+commands:
   resource_job_default_commands:
     steps:
       - run:
