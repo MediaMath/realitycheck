@@ -19,7 +19,7 @@ executors:
 
   workspaces_defaults:
     docker:
-      - image: 'cimg/node:latest'
+      - image: 'cimg/node:15.11.0'
     working_directory: ~/foo/bar
 
 commands:
