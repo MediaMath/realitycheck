@@ -1,4 +1,6 @@
 version: 2.1
+orbs:
+  semantic-versioning: payfit/semantic-versioning@0.96.0
 executors:
   resource_job_executor:
     parameters:
