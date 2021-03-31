@@ -19,7 +19,7 @@ executors:
 
   workspaces_defaults:
     docker:
-      - image: 'circleci/node:latest'
+      - image: 'cimg/node:latest'
     working_directory: ~/foo/bar
 
 commands:
