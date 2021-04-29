@@ -1,153 +1,71 @@
-version: 2.1
+version: 2
 
-executors:
-  resource_job_executor:
-    parameters:
-      resource_class_name:
-        type: string
-    docker:
-      - image: 'cimg/ruby:2.4-node'
-    resource_class: << parameters.resource_class_name >>
+resource_job_defaults: &resource_job_defaults
+  docker:  [{image: 'circleci/ruby:2.4.1'}]
+  steps:
+    - run:
+        name: verify required Environment Variables
+        command: |
+          if [ -z "${CIRCLE_HOSTNAME}" -o -z "${CIRCLE_TOKEN}" ];then
+            echo "You must provide 2 Environment Variables in project settings for this job to run."
+            echo "CIRCLE_HOSTNAME: Should be the scheme://domain of your install. \"https://ci.example.com\""
+            echo "CIRCLE_TOKEN: Should be the API Key of an admin or project level with Scope:All"
+            exit 1
+          fi
+    - run:
+        name: verify that job ran with the requested resource_class option
+        command: |
+          curl -k \
+          "${CIRCLE_HOSTNAME%/}/api/v1.1/project/github/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/$CIRCLE_BUILD_NUM?\
+          circle-token=$CIRCLE_TOKEN" | \
+          jq '.picard.resource_class.class' | grep $CIRCLE_JOB
+remote_docker_defaults: &remote_docker_defaults
+  docker: [{image: 'docker:17.06-git'}]
 
-  remote_docker_defaults:
-    docker:
-      - image: 'docker:17.06-git'
+basic_docker_build: &basic_docker_build
+  name: "Build a really basic docker image"
+  command: |
+    dockerfile=Dockerfile
+    echo "FROM alpine:latest" > $dockerfile
+    echo "RUN echo hello" >> $dockerfile
+    docker build -f $dockerfile --tag throwaway:$CIRCLE_BUILD_NUM .
+    docker run --rm throwaway:$CIRCLE_BUILD_NUM
+contexts_defaults: &contexts_defaults
+  docker: [{image: 'alpine:latest'}]
+  working_directory: /a/contexts/test
 
-  contexts_defaults:
-    docker:
-      - image: 'alpine:latest'
-    working_directory: /a/contexts/test
-
-  workspaces_defaults:
-    docker:
-      - image: 'cimg/node:15.11.0'
-    working_directory: ~/foo/bar
-
-commands:
-  resource_job_default_commands:
-    steps:
-      - run:
-          name: verify required Environment Variables
-          command: |
-            if [ -z "${CIRCLE_HOSTNAME}" -o -z "${CIRCLE_TOKEN}" ];then
-              echo "You must provide 2 Environment Variables in project settings for this job to run."
-              echo "CIRCLE_HOSTNAME: Should be the scheme://domain of your install. \"https://ci.example.com\""
-              echo "CIRCLE_TOKEN: Should be the API Key of an admin or project level with Scope:All"
-              exit 1
-            fi
-      - run:
-          name: verify that job ran with the requested resource_class option
-          command: |
-            if [ $CIRCLE_JOB = "medium-plus" ]; then
-              export CIRCLE_JOB_NAME=medium+
-            else
-              export CIRCLE_JOB_NAME=$CIRCLE_JOB
-            fi
-            curl -k \
-            "${CIRCLE_HOSTNAME%/}/api/v1.1/project/github/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/$CIRCLE_BUILD_NUM?\
-            circle-token=$CIRCLE_TOKEN" | \
-            jq '.picard.resource_class.class' | grep $CIRCLE_JOB_NAME
-  basic_docker_build:
-    steps:
-      - run:
-          name: "Build a really basic docker image"
-          command: |
-            dockerfile=Dockerfile
-            echo "FROM alpine:latest" > $dockerfile
-            echo "RUN echo hello" >> $dockerfile
-            docker build -f $dockerfile --tag throwaway:$CIRCLE_BUILD_NUM .
-            docker run --rm throwaway:$CIRCLE_BUILD_NUM
-
- 
-executor: semantic-release
-  parameters:
-   tag_format:
-    type: string
-    default: ''
-    description: >-
-      Sets the '--tag-format' flag for semantic-release, omit to use the
-      default.
-    config_file:
-    type: string
-    default: ''
-    description: Provide a different configuration file
-    slack_webhook:
-     type: env_var_name
-      default: SLACK_WEBHOOK
-     description: Slack Webhook URL for the semantic-release-slack-bot
-  attach_project:
-    type: boolean
-    default: false
-    description: If "true" will run "attach_workspace" at "~/project"
-  debug:
-    type: boolean
-    default: false
-    description: If "true" will provide more verbose output
-steps:
-  - when:
-      condition: <<parameters.attach_project>>
-      steps:
-        - attach_workspace:
-            at: ~/project
-  - unless:
-      condition: <<parameters.attach_project>>
-      steps:
-        - checkout
-  - release:
-      tag_format: << parameters.tag_format >>
-      config_file: << parameters.config_file >>
-      slack_webhook: << parameters.slack_webhook >>
-      debug: << parameters.debug >>
-
-
-  
-
-
-
-
+workspaces_defaults: &workspaces_defaults
+  docker: [{image: 'circleci/node:latest'}]
+  working_directory: ~/foo/bar
 
 jobs:
   # resource class jobs
   small: # 1 vCPU, 2GB RAM
-    executor:
-      name: resource_job_executor
-      resource_class_name: small
-    steps:
-      - resource_job_default_commands
+    <<: *resource_job_defaults
+    resource_class: small
 
   medium: # 2 vCPUs, 4GB RAM
-    executor:
-      name: resource_job_executor
-      resource_class_name: medium
-    steps:
-      - resource_job_default_commands
+    <<: *resource_job_defaults
+    resource_class: medium
 
-  medium-plus: # 3 vCPUs, 6GB RAM
-    executor:
-      name: resource_job_executor
-      resource_class_name: medium+
-    steps:
-      - resource_job_default_commands
+  medium+: # 3 vCPUs, 6GB RAM
+    <<: *resource_job_defaults
+    resource_class: medium+
 
   large: # 4 vCPUs, 8GB RAM
-    executor:
-      name: resource_job_executor
-      resource_class_name: large
-    steps:
-      - resource_job_default_commands
+    <<: *resource_job_defaults
+    resource_class: large
 
   xlarge: # 8 vCPUs, 16GB RAM
-    executor:
-      name: resource_job_executor
-      resource_class_name: xlarge
-    steps:
-      - resource_job_default_commands
+    <<: *resource_job_defaults
+    resource_class: xlarge
 
   # vm jobs
   machine:
     machine: true
     steps:
-      - basic_docker_build
+      - run:
+          <<: *basic_docker_build
       - run: |
           echo $SLEEP
           date
@@ -158,27 +76,25 @@ jobs:
       SLEEP: 1
 
   remote_docker:
-    executor:
-      name: remote_docker_defaults
+    <<: *remote_docker_defaults
     steps:
       - run: which docker
       - run: docker -v
       - setup_remote_docker
-      - basic_docker_build
+      - run:
+          <<: *basic_docker_build
       - run: docker version
 
   docker_layer_caching:
-    executor:
-      name: remote_docker_defaults
+    <<: *remote_docker_defaults
     steps:
       - run: which docker
       - run: docker -v
       - setup_remote_docker:
           docker_layer_caching: true
-      - basic_docker_build
+      - run:
+          <<: *basic_docker_build
       - run: docker version
-      - sem_ver_tagging
-      - 
 
   machine_dlc:
     machine:
@@ -186,25 +102,23 @@ jobs:
     steps:
       - run: which docker
       - run: docker -v
-      - basic_docker_build
+      - run:
+          <<: *basic_docker_build
       - run: docker version
 
   # feature jobs
   contexts:
-    executor:
-      name: contexts_defaults
+    <<: *contexts_defaults
     steps:
       - run: env | grep CONTEXT_END_TO_END_TEST_VAR
 
   multi-contexts:
-    executor:
-      name: contexts_defaults
+    <<: *contexts_defaults
     steps:
       - run: env | grep MULTI_CONTEXT_END_TO_END_VAR
 
   write_workspace:
-    executor:
-      name: workspaces_defaults
+    <<: *workspaces_defaults
     steps:
       - run: mkdir stuff
       - run: echo 5 >./stuff/thing
@@ -214,8 +128,7 @@ jobs:
             - stuff
 
   read_workspace:
-    executor:
-      name: workspaces_defaults
+    <<: *workspaces_defaults
     steps:
       - attach_workspace:
            at: ./attached
@@ -284,7 +197,7 @@ workflows:
     jobs:
       - small
       - medium
-      - medium-plus
+      - medium+
       - large
       - xlarge
 
@@ -307,4 +220,5 @@ workflows:
           requires:
             - write_workspace
       - artifacts_test_results
+
 
