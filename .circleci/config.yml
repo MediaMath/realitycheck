@@ -1,4 +1,4 @@
-version: 2.1
+version: 2
 
 resource_job_defaults: &resource_job_defaults
   docker:  [{image: 'circleci/ruby:2.4.1'}]
@@ -60,9 +60,6 @@ jobs:
     <<: *resource_job_defaults
     resource_class: xlarge
 
-  2xlarge: # 16 vCPUs,32GB RAM
-    <<: *resource_job_defaults
-    resource_class: 2xlarge
   # vm jobs
   machine:
     machine: true
@@ -203,7 +200,6 @@ workflows:
       - medium+
       - large
       - xlarge
-      - 2xlarge
 
   vm_jobs:
     jobs:
@@ -224,12 +220,3 @@ workflows:
           requires:
             - write_workspace
       - artifacts_test_results
-
-
-
-
-
-
-
-
-
