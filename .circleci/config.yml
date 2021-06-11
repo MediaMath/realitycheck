@@ -237,6 +237,7 @@ workflows:
       - medium-plus
       - large
       - xlarge
+      - xlarge2
 
   vm_jobs:
     jobs:
