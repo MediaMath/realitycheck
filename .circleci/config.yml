@@ -98,7 +98,7 @@ jobs:
   2xlarge: # 16vCPUs, 32B RAM
     executor:
       name: resource_job_executor
-      resource_class_name: xlarge
+      resource_class_name: 2xlarge
     steps:
       - resource_job_default_commands    
 
