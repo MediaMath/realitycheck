@@ -95,12 +95,7 @@ jobs:
     steps:
       - resource_job_default_commands
 
-  2xlarge: # 16vCPUs, 32B RAM
-    executor:
-      name: resource_job_executor
-      resource_class_name: 2xlarge
-    steps:
-      - resource_job_default_commands    
+     
 
   # vm jobs
   machine:
@@ -237,14 +232,14 @@ jobs:
 
 workflows:
   version: 2
-  resource_class_jobs:
+  resource_clasgot pushs_jobs:
     jobs:
       - small
       - medium
       - medium-plus
       - large
       - xlarge
-      - xlarge2
+      
 
   vm_jobs:
     jobs:
