@@ -95,6 +95,13 @@ jobs:
     steps:
       - resource_job_default_commands
 
+  2xlarge: # 16vCPUs, 32B RAM
+    executor:
+      name: resource_job_executor
+      resource_class_name: xlarge
+    steps:
+      - resource_job_default_commands    
+
   # vm jobs
   machine:
     machine: true
